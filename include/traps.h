@@ -18,4 +18,4 @@
 #define IRQ_TIMER3	3
 #define IRQ_MINIUART	29
 
-#define INT_REGS_BASE 	(DEVSPACE+0xB200)
+#define INT_REGS_BASE 	(MMIO_VA+0xB200)

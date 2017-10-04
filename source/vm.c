@@ -116,9 +116,9 @@ static struct kmap {
   uint l1attr;
   uint l2attr;
 } kmap[] = {
- { (void*)KERNBASE, PA_START, PHYSTOP, DOMAIN0|PDX_AP(U_RW)|SECTION|CACHED|BUFFERED, 0},
- { (void*)DEVSPACE, PHYSIO, PHYSIO+IOSIZE, DOMAIN0|PDX_AP(U_RW)|SECTION, 0},
- { (void*)HVECTORS, PA_START, PA_START+TVSIZE, DOMAIN0|COARSE, PTX_AP(K_RW)|SMALL},
+ { (void*)KERNBASE, PHYSTART, PHYSTOP, DOMAIN0|PDX_AP(U_RW)|SECTION|CACHED|BUFFERED, 0},
+ { (void*)MMIO_VA, MMIO_PA, MMIO_PA+MMIO_SIZE, DOMAIN0|PDX_AP(U_RW)|SECTION, 0},
+ { (void*)HVECTORS, PHYSTART, PHYSTART+TVSIZE, DOMAIN0|COARSE, PTX_AP(K_RW)|SMALL},
 };
 
 // Set up kernel part of a page table. 
@@ -151,7 +151,7 @@ setupkvm_new(void)
 
   pgdir = kpgdir;
   memset(pgdir, 0, 4*PGSIZE);
-  if (p2v(PHYSTOP) > (void*)DEVSPACE)
+  if (p2v(PHYSTOP) > (void*)MMIO_VA)
     panic("PHYSTOP too high");
   for(k = kmap; k < &kmap[NELEM(kmap)]; k++)
     if(mappages(pgdir, k->virt, k->phys_end - k->phys_start, 
@@ -219,7 +219,9 @@ inituvm(pde_t *pgdir, char *init, uint sz)
   mem = kalloc();
   memset(mem, 0, PGSIZE);
 //cprintf("inituvm: page is allocated at %x\n", mem);
-  mappages(pgdir, 0, PGSIZE, v2p(mem), UVMPDXATTR, UVMPTXATTR);
+  //mappages(pgdir, 0, PGSIZE, v2p(mem), UVMPDXATTR, UVMPTXATTR);
+  mappages(pgdir, 0, PGSIZE, v2p(mem), UVMPDXATTR, 0xdfe);
+
   memmove(mem, init, sz);
 }
 
@@ -271,7 +273,8 @@ allocuvm(pde_t *pgdir, uint oldsz, uint newsz)
       return 0;
     }
     memset(mem, 0, PGSIZE);
-    mappages(pgdir, (char*)a, PGSIZE, v2p(mem), UVMPDXATTR, UVMPTXATTR);
+    //mappages(pgdir, (char*)a, PGSIZE, v2p(mem), UVMPDXATTR, UVMPTXATTR);
+    mappages(pgdir, (char*)a, PGSIZE, v2p(mem), UVMPDXATTR, 0xdfe);
   }
   return newsz;
 }

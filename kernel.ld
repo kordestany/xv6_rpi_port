@@ -4,26 +4,35 @@
 *
 *	A linker script for generation of raspberry pi kernel images.
 ******************************************************************************/
+ENTRY(_start)
+
+PHYSOFFSET  = DEFINED(PHYSOFFSET)  ? PHYSOFFSET  : 0x80008000;
+KERNOFFSET  = DEFINED(KERNOFFSET)  ? KERNOFFSET  : 0xC0008000;
+SHIFT		= KERNOFFSET - PHYSOFFSET; 
 
 SECTIONS {
-        /* Link the kernel at this address: "." means the current address */
-        /* Must be equal to KERNLINK */
-        . = 0x80008000;
-
-
+	/* Link the kernel at this address: "." means the current address */
+	/* Must be equal to KERNLINK */
+	
 	/*
 	* First and formost we need the .init section, containing the code to 
-        * be run first. We allow room for the ATAGs and stack and conform to 
-        * the bootloader's expectation by putting this code at 0x8000.
+	* be run first. We allow room for the ATAGs and stack and conform to 
+	* the bootloader's expectation by putting this code at 0x8000.
 	*/
-	.init 0x80008000 : AT(0x8000) {
+	
+	.init PHYSOFFSET : {
 		*(.init)
 	}
+	
+	. = ALIGN(0x100);
+	INIT_END = .;
+	. = . + SHIFT;
 	
 	/* 
 	* Next we put the rest of the code.
 	*/
-	.text : {
+	
+	 .text : AT (INIT_END) {  
 		*.c.o(.text)
 		*(.text .stub .text.*)
 	}
