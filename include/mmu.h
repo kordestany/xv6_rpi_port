@@ -7,8 +7,8 @@
 
 
 #define MBYTE		0x100000
-#define K_PDX_BASE	0x4000
-#define K_PTX_BASE	0x3000
+//Makefile #define K_PDX_BASE	0x4000
+//Makefile #define K_PTX_BASE	0x3000
 
 #define CACHELINESIZE   32
 

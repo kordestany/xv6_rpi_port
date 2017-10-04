@@ -1316,7 +1316,7 @@ forktest(void)
 void
 sbrktest(void)
 {
-  int fds[2], pid, pids[10], ppid;
+  int fds[2], pid, pids[5], ppid;
   char *a, *b, *c, *lastaddr, *oldbrk, *p, scratch;
   uint amt;
 
@@ -1324,6 +1324,7 @@ sbrktest(void)
   oldbrk = sbrk(0);
 
   // can one sbrk() less than a page?
+  printf(stdout, "test #1 sbrk() less than a page?\n");
   a = sbrk(0);
   int i;
   for(i = 0; i < 5000; i++){ 
@@ -1335,11 +1336,17 @@ sbrktest(void)
     *b = 1;
     a = b + 1;
   }
+  printf(stdout, "test #1 done.\n");
+
+  printf(stdout, "test #2 test fork?\n");
   pid = fork();
   if(pid < 0){
     printf(stdout, "sbrk test fork failed\n");
     exit();
   }
+  printf(stdout, "test #2 done.\n");
+
+  printf(stdout, "test #3 post-fork.\n");
   c = sbrk(1);
   c = sbrk(1);
   if(c != a + 1){
@@ -1349,9 +1356,11 @@ sbrktest(void)
   if(pid == 0)
     exit();
   wait();
+  printf(stdout, "test #3 done.\n");
 
+  printf(stdout, "test #4 grow address space to something big.\n");
   // can one grow address space to something big?
-#define BIG (100*1024*1024)
+  #define BIG (100*1024*1024)
   a = sbrk(0);
   amt = (BIG) - (uint)a;
   p = sbrk(amt);
@@ -1361,7 +1370,9 @@ sbrktest(void)
   }
   lastaddr = (char*) (BIG-1);
   *lastaddr = 99;
+  printf(stdout, "test #4 done.\n");
 
+  printf(stdout, "test #5 de-allocate\n");
   // can one de-allocate?
   a = sbrk(0);
   c = sbrk(-4096);
@@ -1374,7 +1385,9 @@ sbrktest(void)
     printf(stdout, "sbrk deallocation produced wrong address, a %x c %x\n", a, c);
     exit();
   }
+  printf(stdout, "test #5 done.\n");
 
+  printf(stdout, "test #6 re-allocate page.\n");
   // can one re-allocate that page?
   a = sbrk(0);
   c = sbrk(4096);
@@ -1387,14 +1400,18 @@ sbrktest(void)
     printf(stdout, "sbrk de-allocation didn't really deallocate\n");
     exit();
   }
+  printf(stdout, "test #6 done.\n");
 
+  printf(stdout, "test #7 downsize.\n");
   a = sbrk(0);
   c = sbrk(-(sbrk(0) - oldbrk));
   if(c != a){
     printf(stdout, "sbrk downsize failed, a %x c %x\n", a, c);
     exit();
   }
+  printf(stdout, "test #7 done.\n");
 
+  printf(stdout, "test #8 read the kernel's memory.\n");
   // can we read the kernel's memory?
   for(a = (char*)(KERNBASE); a < (char*) (KERNBASE+2000000); a += 50000){
     ppid = getpid();
@@ -1410,16 +1427,21 @@ sbrktest(void)
     }
     wait();
   }
+  printf(stdout, "test #8 done.\n");
 
+  printf(stdout, "test #9 clean up the last failed allocation\n");
   // if we run the system out of memory, does it clean up the last
   // failed allocation?
   if(pipe(fds) != 0){
     printf(1, "pipe() failed\n");
     exit();
   }
+  printf(stdout, "test #9 done.\n");
 
+  printf(stdout, "test #10 memory utilization 1.\n");
   for(i = 0; i < sizeof(pids)/sizeof(pids[0]); i++){
     if((pids[i] = fork()) == 0){
+      printf(stdout, "create pid:%d.\n",i);
       // allocate a lot of memory
       sbrk(BIG - (uint)sbrk(0));
       write(fds[1], "x", 1);
@@ -1429,6 +1451,9 @@ sbrktest(void)
     if(pids[i] != -1)
       read(fds[0], &scratch, 1);
   }
+  printf(stdout, "test #10 done.\n");
+
+  printf(stdout, "test #11 memory utilization 2.\n");
   // if those failed allocations freed up the pages they did allocate,
   // we'll be able to allocate here
   c = sbrk(4096);
@@ -1438,10 +1463,14 @@ sbrktest(void)
     kill(pids[i]);
     wait();
   }
+  printf(stdout, "test #11 done.\n");
+
+  printf(stdout, "test #12 leaked memory.\n");
   if(c == (char*)0xffffffff){
     printf(stdout, "failed sbrk leaked memory\n");
     exit();
   }
+  printf(stdout, "test #12 done.\n");
 
   if(sbrk(0) > oldbrk)
     sbrk(-(sbrk(0) - oldbrk));

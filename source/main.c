@@ -53,22 +53,36 @@ void enableirqminiuart(void);
 int cmain()
 {
 
+  mmuinit0();
+  //XX OK
   mmuinit1();
   machinit();
+
+  #if defined (RPI1) || defined (RPI2)
   uartinit();
+  #elif defined (FVP)
+  uartinit_fvp();
+  #endif
+  //XXX OK
   dsb_barrier();
+
   consoleinit();
+
   cprintf("\nHello World from xv6\n");
-  kinit1(end, P2V(8*1024*1024));  // reserve 8 pages for PGDIR
+  acknowledge();
+  kinit1(end, P2V((8*1024*1024)+PHYSTART));  // reserve 8 pages for PGDIR
   kpgdir=p2v(K_PDX_BASE);
 
+  #if defined (RPI1) || defined (RPI2)
   mailboxinit();
   create_request(mailbuffer, MPI_TAG_GET_ARM_MEMORY, 8, 0, 0);
   writemailbox((uint *)mailbuffer, 8);
   readmailbox(8);
   if(mailbuffer[1] != 0x80000000) cprintf("new error readmailbox\n");
-  else 
-cprintf("ARM memory is %x %x\n", mailbuffer[MB_HEADER_LENGTH + TAG_HEADER_LENGTH], mailbuffer[MB_HEADER_LENGTH + TAG_HEADER_LENGTH+1]);
+  //else
+
+  cprintf("ARM memory is %x %x\n", mailbuffer[MB_HEADER_LENGTH + TAG_HEADER_LENGTH], mailbuffer[MB_HEADER_LENGTH + TAG_HEADER_LENGTH+1]);
+  #endif
 
   pinit();
   tvinit();
@@ -81,15 +95,13 @@ cprintf("it is ok after fileinit\n");
 cprintf("it is ok after iinit\n");
   ideinit();
 cprintf("it is ok after ideinit\n");
-  timer3init();
-  kinit2(P2V(8*1024*1024), P2V(PHYSTOP));
+  kinit2(P2V((8*1024*1024)+PHYSTART), P2V(PHYSTOP));
 cprintf("it is ok after kinit2\n");
   userinit();
 cprintf("it is ok after userinit\n");
+  timer3init();
+cprintf("it is ok after timer3init\n");
   scheduler();
-
-
   NotOkLoop();
-
   return 0;
 }

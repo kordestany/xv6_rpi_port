@@ -16,7 +16,7 @@
 #include "arm.h"
 #include "spinlock.h"
 
-#define TIMER_REGS_BASE		0xFE003000
+#define TIMER_REGS_BASE		(MMIO_VA+0x003000)
 #define CONTROL_STATUS		0x0 // control/status
 #define COUNTER_LO		0x4 // the time-stamp lower 32 bits
 #define COUNTER_HI		0x8 // the time-stamp higher 32 bits

@@ -1,7 +1,8 @@
 # Cross-compiling (e.g., on Mac OS X)
 #TOOLPREFIX = i386-jos-elf-
 # Using native tools (e.g., on X86 Linux)
-TOOLPREFIX =
+#TOOLPREFIX = ~/gcc-arm-none-eabi-5_4-2016q3/bin/arm-none-eabi-
+TOOLPREFIX = ~/sdk/gcc-linaro-6.3.1-2017.02-x86_64_arm-eabi/bin/arm-eabi-
 
 
 # The intermediate directory for compiled object files.
@@ -12,7 +13,8 @@ AS = $(TOOLPREFIX)as
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
-CFLAGS := -fno-pic -static -fno-builtin -fno-strict-aliasing -fshort-wchar -O2 -Wall -MD -ggdb -Werror -fno-omit-frame-pointer -fno-stack-protector -Wa,-march=armv6 -Wa,-mcpu=arm1176jzf-s
+#CFLAGS := -fno-pic -static -fno-builtin -fno-strict-aliasing -fshort-wchar -O2 -Wall -MD -ggdb -Werror -fno-omit-frame-pointer -fno-stack-protector -Wa,-march=armv6 -Wa,-mcpu=arm1176jzf-s
+CFLAGS := -fno-pic -static -fno-builtin -fno-strict-aliasing -fshort-wchar -O2 -Wall -MD -ggdb -Werror -fno-omit-frame-pointer -fno-stack-protector -march=armv7-a
 
 initcode: initcode.S
 	$(CC) $(CFLAGS) -nostdinc -I. -c initcode.S
@@ -35,7 +37,8 @@ _forktest: forktest.o $(ULIB)
 	$(OBJDUMP) -S _forktest > forktest.asm
 
 mkfs: mkfs.c ../include/fs.h
-	gcc -Werror -Wall -o mkfs mkfs.c
+	gcc -o mkfs mkfs.c
+	#gcc -Werror -Wall -o mkfs mkfs.c
 
 # Prevent deletion of intermediate files, e.g. cat.o, after first build, so
 # that disk image changes after first build are persistent until clean.  More
@@ -64,4 +67,4 @@ fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
 
 clean:
-	rm -f *.o *.d fs.img mkfs $(UPROGS)
+	rm -f *.o *.d *.asm *.sym fs.img mkfs initcode initcode.out $(UPROGS)
