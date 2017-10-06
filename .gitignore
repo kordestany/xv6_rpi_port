@@ -1,0 +1,14 @@
+tags
+build/
+kernel.list
+kernel.map
+kernel7.bin
+uprogs/*.o
+uprogs/*.d
+uprogs/*.asm
+uprogs/*.sym
+uprogs/_*
+uprogs/fs.img
+uprogs/mkfs
+uprogs/initcode
+uprogs/initcode.out
